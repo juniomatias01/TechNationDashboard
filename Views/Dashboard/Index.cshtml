@@ -1,0 +1,256 @@
+﻿@model TechNationDashboard.ViewModels.DashboardViewModel
+
+@{
+    ViewData["Title"] = "Dashboard";
+    var selectedStatus = ViewData["filterStatus"]?.ToString();
+    var statuses = new List<string> { "Emitida", "CobrancaRealizada", "PagamentoAtrasado", "PagamentoRealizado" };
+    int maxPageNumbersToShow = 5;
+    int currentPage = Model.PageNumber;
+    int totalPages = (int)Math.Ceiling((double)Model.TotalItems / Model.PageSize);
+    int startPage = Math.Max(1, currentPage - maxPageNumbersToShow / 2);
+    int endPage = Math.Min(totalPages, startPage + maxPageNumbersToShow - 1);
+}
+
+<div class="container-fluid">
+    <div class="row mb-3">
+        <div class="col">
+            <form class="form-inline" method="get" asp-action="Index" id="filterForm">
+                <div class="form-group mr-2">
+                    <label for="filterMonth">Mês de Emissão:</label>
+                    <input type="text" class="form-control ml-2" id="filterMonth" name="filterMonth" value="@ViewData["filterMonth"]" />
+                </div>
+                <div class="form-group mr-2">
+                    <label for="filterYear">Ano de Emissão:</label>
+                    <input type="text" class="form-control ml-2" id="filterYear" name="filterYear" value="@ViewData["filterYear"]" />
+                </div>
+                <div class="form-group mr-2">
+                    <label for="filterStatus">Status:</label>
+                    <select class="form-control ml-2" id="filterStatus" name="filterStatus">
+                        <option value="">Todos</option>
+                        @foreach (var status in statuses)
+                        {
+                            if (status == selectedStatus)
+                            {
+                                <option value="@status" selected>@status</option>
+                            }
+                            else
+                            {
+                                <option value="@status">@status</option>
+                            }
+                        }
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary">Filtrar</button>
+                <button type="button" class="btn btn-secondary ml-2" onclick="clearFilters()">Limpar Filtros</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="row text-center">
+        <div class="col-md-3 col-sm-6 mb-4">
+            <div class="circle-indicator">
+                <div class="circle-indicator-value">
+                    @Model.ValorTotalNotasEmitidas.ToString("C")
+                </div>
+                <div class="circle-indicator-label">
+                    Emitidas
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6 mb-4">
+            <div class="circle-indicator">
+                <div class="circle-indicator-value">
+                    @Model.ValorTotalNotasSemCobranca.ToString("C")
+                </div>
+                <div class="circle-indicator-label">
+                    Sem Cobrança
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6 mb-4">
+            <div class="circle-indicator">
+                <div class="circle-indicator-value">
+                    @Model.ValorTotalNotasVencidas.ToString("C")
+                </div>
+                <div class="circle-indicator-label">
+                    Inadimplência
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6 mb-4">
+            <div class="circle-indicator">
+                <div class="circle-indicator-value">
+                    @Model.ValorTotalNotasAVencer.ToString("C")
+                </div>
+                <div class="circle-indicator-label">
+                    A Vencer
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <h2>Gráficos</h2>
+        </div>
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    Evolução da Inadimplência
+                </div>
+                <div class="card-body">
+                    <canvas id="inadimplenciaChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    Evolução da Receita
+                </div>
+                <div class="card-body">
+                    <canvas id="receitaChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <h2>Notas Fiscais Emitidas</h2>
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Nome Pagador</th>
+                        <th>Número Identificação</th>
+                        <th>Data Emissão</th>
+                        <th>Data Cobrança</th>
+                        <th>Data Pagamento</th>
+                        <th>Valor</th>
+                        <th>Documento Nota Fiscal</th>
+                        <th>Documento Boleto Bancário</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var nota in Model.NotasFiscais)
+                    {
+                        <tr>
+                            <td>@nota.Id</td>
+                            <td>@nota.NomePagador</td>
+                            <td>@nota.NumeroIdentificacao</td>
+                            <td>@nota.DataEmissao.ToShortDateString()</td>
+                            <td>@nota.DataCobranca.ToShortDateString()</td>
+                            <td>@nota.DataPagamento?.ToShortDateString() ?? "N/A"</td>
+                            <td>@nota.Valor.ToString("C")</td>
+                            <td>@nota.DocumentoNotaFiscal</td>
+                            <td>@nota.DocumentoBoletoBancario</td>
+                            <td>@nota.Status</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+
+            <nav>
+                <ul class="pagination justify-content-center">
+                    <li class="page-item @(Model.PageNumber == 1 ? "disabled" : "")">
+                        <a class="page-link" href="@Url.Action("Index", new { pageNumber = Model.PageNumber - 1, filterMonth = ViewData["filterMonth"], filterYear = ViewData["filterYear"], filterStatus = ViewData["filterStatus"] })">Previous</a>
+                    </li>
+                    @if (startPage > 1)
+                    {
+                        <li class="page-item disabled"><a class="page-link">...</a></li>
+                    }
+                    @for (int i = startPage; i <= endPage; i++)
+                    {
+                        <li class="page-item @(Model.PageNumber == i ? "active" : "")">
+                            <a class="page-link" href="@Url.Action("Index", new { pageNumber = i, filterMonth = ViewData["filterMonth"], filterYear = ViewData["filterYear"], filterStatus = ViewData["filterStatus"] })">@i</a>
+                        </li>
+                    }
+                    @if (endPage < totalPages)
+                    {
+                        <li class="page-item disabled"><a class="page-link">...</a></li>
+                    }
+                    <li class="page-item @(Model.PageNumber == totalPages ? "disabled" : "")">
+                        <a class="page-link" href="@Url.Action("Index", new { pageNumber = Model.PageNumber + 1, filterMonth = ViewData["filterMonth"], filterYear = ViewData["filterYear"], filterStatus = ViewData["filterStatus"] })">Next</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        var ctxInadimplencia = document.getElementById('inadimplenciaChart').getContext('2d');
+        var inadimplenciaChart = new Chart(ctxInadimplencia, {
+            type: 'line',
+            data: {
+                labels: @Html.Raw(Json.Serialize(Model.Meses)),
+                datasets: [{
+                    label: 'Inadimplência',
+                    data: @Html.Raw(Json.Serialize(Model.InadimplenciaMesAMes)),
+                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        var ctxReceita = document.getElementById('receitaChart').getContext('2d');
+        var receitaChart = new Chart(ctxReceita, {
+            type: 'line',
+            data: {
+                labels: @Html.Raw(Json.Serialize(Model.Meses)),
+                datasets: [{
+                    label: 'Receita',
+                    data: @Html.Raw(Json.Serialize(Model.ReceitaMesAMes)),
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        function clearFilters() {
+            document.getElementById('filterMonth').value = '';
+            document.getElementById('filterYear').value = '';
+            document.getElementById('filterStatus').value = '';
+            document.getElementById('filterForm').submit();
+        }
+
+        document.getElementById('filterForm').addEventListener('submit', function (event) {
+            event.preventDefault();
+            var form = event.target;
+            var data = new FormData(form);
+            var params = new URLSearchParams(data).toString();
+            fetch(form.action + '?' + params, {
+                method: 'get'
+            }).then(response => response.text()).then(html => {
+                var parser = new DOMParser();
+                var doc = parser.parseFromString(html, 'text/html');
+                document.querySelector('.container-fluid').innerHTML = doc.querySelector('.container-fluid').innerHTML;
+            });
+        });
+
+        document.getElementById('hamburgerMenu').addEventListener('click', function () {
+            var sidebar = document.querySelector('.sidebar');
+            sidebar.classList.toggle('d-none');
+        });
+    </script>
+}

@@ -1,0 +1,66 @@
+﻿@model IEnumerable<TechNationDashboard.Entities.NotaFiscal>
+
+@{
+    ViewData["Title"] = "Notas Fiscais";
+}
+
+<h1 class="h2">Notas Fiscais</h1>
+
+<form method="get" class="form-inline mb-3">
+    <div class="form-group mr-2">
+        <label for="mesEmissao" class="mr-2">Mês de Emissão:</label>
+        <input type="month" id="mesEmissao" name="mesEmissao" class="form-control">
+    </div>
+    <div class="form-group mr-2">
+        <label for="mesCobranca" class="mr-2">Mês de Cobrança:</label>
+        <input type="month" id="mesCobranca" name="mesCobranca" class="form-control">
+    </div>
+    <div class="form-group mr-2">
+        <label for="mesPagamento" class="mr-2">Mês de Pagamento:</label>
+        <input type="month" id="mesPagamento" name="mesPagamento" class="form-control">
+    </div>
+    <div class="form-group mr-2">
+        <label for="statusNota" class="mr-2">Status:</label>
+        <select id="statusNota" name="statusNota" class="form-control">
+            <option>Emitida</option>
+            <option>Cobrança realizada</option>
+            <option>Pagamento em atraso</option>
+            <option>Pagamento realizado</option>
+        </select>
+    </div>
+    <button type="submit" class="btn btn-primary">Filtrar</button>
+</form>
+
+<table class="table table-striped">
+    <thead class="thead-dark">
+        <tr>
+            <th>Nome do Pagador</th>
+            <th>Numero de Identificação</th>
+            <th>Data de Emissão</th>
+            <th>Data de Cobrança</th>
+            <th>Data de Pagamento</th>
+            <th>Valor</th>
+            <th>Status</th>
+            <th>Ações</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var nota in Model)
+        {
+            <tr>
+                <td>@nota.NomePagador</td>
+                <td>@nota.NumeroIdentificacao</td>
+                <td>@nota.DataEmissao.ToShortDateString()</td>
+                <td>@nota.DataCobranca.ToShortDateString()</td>
+                <td>@nota.DataPagamento?.ToShortDateString() ?? "N/A"</td>
+                <td>@nota.Valor.ToString("C")</td>
+                <td>@nota.Status</td>
+                <td>
+                    <a href="@Url.Action("Edit", new { id = nota.Id })" class="btn btn-primary btn-sm">Editar</a>
+                    <a href="@Url.Action("Delete", new { id = nota.Id })" class="btn btn-danger btn-sm">Deletar</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+<a href="@Url.Action("Create")" class="btn btn-success">Criar Nova Nota</a>
