@@ -73,7 +73,7 @@ TechNationDashboard/
 
 1. **Clone o repositório:**
     ```sh
-    git clone https://github.com/seu-usuario/technation-dashboard.git
+    git clone https://github.com/juniomatias01/TechNationDashboard.git
     ```
 
 2. **Navegue até o diretório do projeto:**
@@ -101,6 +101,21 @@ TechNationDashboard/
 
 6. **Acesse a aplicação:**
     - Abra o navegador e vá para `http://localhost:5000`.
+
+## Executando com Docker
+
+1. **Construir a imagem Docker:**
+    ```sh
+    docker-compose build
+    ```
+
+2. **Iniciar os containers:**
+    ```sh
+    docker-compose up
+    ```
+
+3. **Acesse a aplicação:**
+    - Abra o navegador e vá para `http://localhost:8080`.
 
 ## Uso
 
